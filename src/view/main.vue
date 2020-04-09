@@ -5,6 +5,7 @@
       <div ref="box" class="box">
         <div
           v-for="(item, index) in jigsawArr"
+          :id="'id' + index"
           :key="index"
           class="small-box"
           :class="{ 'm-r-t-2': (index + 1) % 3 !== 0 }"
@@ -19,7 +20,10 @@
       <h3>时间：{{ time }}</h3>
       <button v-focus @click="againArr">开始</button>
     </div>
+    <router-link :to="{name:'nextTick'}">去哪里</router-link>
+    <router-link to="new">Home</router-link>
     <div v-if="win" class="modal" />
+    <router-view />
   </div>
 </template>
 <script>
@@ -194,9 +198,12 @@ export default {
         this.jigsawArr.splice(ind, 1, '')
         this.$nextTick(() => {
           if (this.success(this.jigsawArr)) {
-            alert('赢了')
-            this.win = true
-            clearInterval(this.n)
+            this.number++
+            console.log(document.querySelector('#id8').innerHTML)
+            alert(1)
+            return
+            // this.win = true
+            // clearInterval(this.n)
             // this.againArr()
           } else {
             this.spaceIndex = ind

@@ -10,7 +10,8 @@
   "dependencies": {
     "core-js": "^3.4.4",
     "vue": "^2.6.10",
-    "vue-router": "^3.1.5"
+    "vue-router": "^3.1.5",
+    "lint": "eslint --ext .js,.vue src"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^4.1.0",
@@ -19,7 +20,8 @@
     "axios": "^0.19.1",
     "babel-eslint": "^10.0.3",
     "eslint": "^5.16.0",
-    "eslint-plugin-vue": "^5.0.0",
+    "eslint-config-vue": "^2.0.2",
+    "eslint-plugin-vue": "^5.2.3",
     "image-webpack-loader": "^6.0.0",
     "iscroll": "^5.2.0",
     "node-sass": "^4.13.1",
