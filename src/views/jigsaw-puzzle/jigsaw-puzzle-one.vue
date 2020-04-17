@@ -20,10 +20,7 @@
       <h3>时间：{{ time }}</h3>
       <button v-focus @click="againArr">开始</button>
     </div>
-    <router-link :to="{name:'nextTick'}">去哪里</router-link>
-    <router-link to="new">Home</router-link>
     <div v-if="win" class="modal" />
-    <router-view />
   </div>
 </template>
 <script>
