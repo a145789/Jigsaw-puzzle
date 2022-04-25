@@ -1,0 +1,18 @@
+#root {
+  display: flex;
+  justify-content: center;
+  padding: 120px 0 0;
+}
+.app {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+.btn {
+  display: flex;
+  justify-content: center;
+}
+
+.btn div {
+  margin-right: 6px;
+}
