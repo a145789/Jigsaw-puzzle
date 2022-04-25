@@ -1,12 +1,12 @@
 ####{BSB GENERATED: NO EDIT
-FLG -ppx '/Users/mgd/Documents/other/rescript/my-vitejs-react-rescript/node_modules/.pnpm/rescript@9.1.4/node_modules/rescript/darwin/bsc.exe -as-ppx -bs-jsx 3'
-S /Users/mgd/Documents/other/rescript/my-vitejs-react-rescript/node_modules/.pnpm/rescript@9.1.4/node_modules/rescript/lib/ocaml
-B /Users/mgd/Documents/other/rescript/my-vitejs-react-rescript/node_modules/.pnpm/rescript@9.1.4/node_modules/rescript/lib/ocaml
+FLG -ppx "D:\workpack_2\Jigsaw-puzzle\node_modules\.pnpm\rescript@9.1.4\node_modules\rescript\win32\bsc.exe -as-ppx -bs-jsx 3"
+S D:\workpack_2\Jigsaw-puzzle\node_modules\.pnpm\rescript@9.1.4\node_modules\rescript\lib\ocaml
+B D:\workpack_2\Jigsaw-puzzle\node_modules\.pnpm\rescript@9.1.4\node_modules\rescript\lib\ocaml
 FLG -w +a-4-9-20-40-41-42-50-61-102
-S /Users/mgd/Documents/other/rescript/my-vitejs-react-rescript/node_modules/@rescript/react/lib/ocaml
-B /Users/mgd/Documents/other/rescript/my-vitejs-react-rescript/node_modules/@rescript/react/lib/ocaml
-S /Users/mgd/Documents/other/rescript/my-vitejs-react-rescript/node_modules/rescript-webapi/lib/ocaml
-B /Users/mgd/Documents/other/rescript/my-vitejs-react-rescript/node_modules/rescript-webapi/lib/ocaml
+S D:\workpack_2\Jigsaw-puzzle\node_modules\@rescript\react\lib\ocaml
+B D:\workpack_2\Jigsaw-puzzle\node_modules\@rescript\react\lib\ocaml
+S D:\workpack_2\Jigsaw-puzzle\node_modules\rescript-webapi\lib\ocaml
+B D:\workpack_2\Jigsaw-puzzle\node_modules\rescript-webapi\lib\ocaml
 S src
-B lib/bs/src
+B lib\bs\src
 ####BSB GENERATED: NO EDIT}

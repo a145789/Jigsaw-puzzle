@@ -28,12 +28,35 @@ let make = () => {
     setTime(_ => 0)
   }
 
+  let begin = () => {
+    setStep(_ => 0)
+    setTime(_ => 1)
+    setJigsawArray(_ => [])
+  }
+
+  React.useEffect1(() => {
+    let timer = ref(_)
+    if time !== 0 {
+      // Js.Global.setTimeout(() => setTime(_ => time + 1), 1000)
+      let message = "Timed out!"
+
+      let _ = Js.Global.setTimeout(() => Js.log(message), 1000)
+    }
+    let clenup = () => {
+      // Js.clearTimeout(timer.contents)
+      Js.log("cleaned up")
+    }
+
+    Some(clenup)
+  }, [time])
+
   <div className="app">
     <h2> {"3*3"->React.string} </h2>
     <div>
       <h3>
         <div />
         <div className="btn">
+          <button onClick={_e => begin()}> {"begin"->React.string} </button>
           <div> {`step: ${step->Belt.Int.toString}`->React.string} </div>
           <div> {`time: ${time->Belt.Int.toString} `->React.string} </div>
           <button onClick={_e => rest()}> {"rest"->React.string} </button>
