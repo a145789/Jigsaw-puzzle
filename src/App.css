@@ -16,3 +16,20 @@
 .btn div {
   margin-right: 6px;
 }
+
+.box {
+  display: flex;
+  flex-wrap: wrap;
+  border: 2px solid #ccc;
+  width: 300px;
+  height: 300px;
+}
+.jigsaw-item {
+  width: 98px;
+  height: 98px;
+  border: 1px solid #ccc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+}
