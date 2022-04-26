@@ -8,7 +8,8 @@
     "format": "rescript format -all",
     "serve": "vite preview",
     "dev": "vite",
-    "test": "vitest"
+    "test": "vitest",
+    "deploy": "pnpm build && gh-pages -d dist"
   },
   "dependencies": {
     "@rescript/react": "^0.10.3",
