@@ -7,6 +7,7 @@ external alert: string => unit = "alert"
 let make = () => {
   let (step, setStep) = React.useState(() => 0)
   let (time, setTime) = React.useState(() => 0)
+  let notClicked = React.useRef(false)
   let (jigsawArray: array<array<int>>, setJigsawArray) = React.useState(() => [])
   let (emtyPosition: (int, int), setEmtyPosition) = React.useState(() => (2, 2))
 
@@ -51,6 +52,11 @@ let make = () => {
   let begin = () => {
     setTime(_ => 1)
     setJigsawArray(_ => genJigsaw()->Belt.Array.concat([9])->tearArr)
+  }
+
+  let auto = () => {
+    begin()
+    notClicked.current = true
   }
 
   let handle = (y: int, x: int) => {
@@ -113,11 +119,14 @@ let make = () => {
           })->React.array
         })->React.array}
       </div>
-      <div className="btn">
-        <button onClick={_e => begin()}> {"begin"->React.string} </button>
+      <div className="msg">
         <div> {`step: ${step->Belt.Int.toString}`->React.string} </div>
         <div> {`time: ${time->Belt.Int.toString} `->React.string} </div>
+      </div>
+      <div className="btn">
+        <button onClick={_e => begin()}> {"begin"->React.string} </button>
         <button onClick={_e => rest()}> {"rest"->React.string} </button>
+        <button onClick={_e => auto()}> {"auto "->React.string} </button>
       </div>
     </div>
   </div>

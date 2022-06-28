@@ -8,12 +8,15 @@
   align-items: center;
   flex-direction: column;
 }
-.btn {
+.btn,
+.msg {
+  margin-top: 12px;
   display: flex;
   justify-content: center;
 }
 
-.btn div {
+.msg div,
+.btn button {
   margin-right: 6px;
 }
 
