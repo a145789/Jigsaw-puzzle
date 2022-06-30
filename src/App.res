@@ -152,7 +152,7 @@ let make = () => {
           }
         })
       })
-      Js.log2(currentScore,score.contents)
+      Js.log2(currentScore, score.contents)
       if currentScore <= score.contents {
         bestResult := i.contents
         score := currentScore
@@ -160,7 +160,7 @@ let make = () => {
 
       i := i.contents + 1
     }
-    Js.log2(bestResult.contents,score.contents)
+    Js.log2(bestResult.contents, score.contents)
     let (nextY, nextX) = nextEmptyPositions[bestResult.contents]
     squareRun(nextY, nextX)
   }
@@ -236,6 +236,7 @@ let make = () => {
         <button onClick={_e => restGame()}> {"Rest Game"->React.string} </button>
         <button onClick={_e => autoGame()}> {"Auto Game"->React.string} </button>
       </div>
+      <div className="version"> {"v1.0.0"->React.string} </div>
     </div>
   </div>
 }
