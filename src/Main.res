@@ -1,6 +1,10 @@
 %%raw(`import './normal.css'`)
 
-ReactDOM.render(
-  <React.StrictMode> <App /> </React.StrictMode>,
-  ReactDOM.querySelector("#root")->Belt.Option.getExn,
-)
+type r = {render: (. React.element) => unit}
+
+@module("react-dom/client")
+external createRoot: Dom.element => r = "createRoot"
+
+let root = createRoot(ReactDOM.querySelector("#root")->Belt.Option.getExn)
+
+root.render(. <React.StrictMode> <App /> </React.StrictMode>)
