@@ -5,6 +5,15 @@ external alert: string => unit = "alert"
 
 type appMode = Manual | Auto | Over
 
+
+type rec autoNode = {
+  "parentStatus": option<autoNode>,
+  "childStatus": array<autoNode>,
+  "emptyCurrentPosition": (int, int),
+} 
+
+
+
 @react.component
 let make = () => {
   let (step, setStep) = React.useState(() => 0)
@@ -121,6 +130,12 @@ let make = () => {
     }
 
     let (emptyY, emptyX) = emtyPosition.current
+    let node: autoNode = {
+      "parentStatus": None,
+      "childStatus": [],
+      "emptyCurrentPosition": emtyPosition.current,
+    }
+
     let nextEmptyPositions = Js.Array2.filter(
       [(emptyY + 1, emptyX), (emptyY - 1, emptyX), (emptyY, emptyX + 1), (emptyY, emptyX - 1)],
       ((y, x)) => {
@@ -152,15 +167,15 @@ let make = () => {
           }
         })
       })
-      Js.log2(currentScore, score.contents)
-      if currentScore <= score.contents {
+      // Js.log2(currentScore, score.contents)
+      if currentScore < score.contents {
         bestResult := i.contents
         score := currentScore
       }
 
       i := i.contents + 1
     }
-    Js.log2(bestResult.contents, score.contents)
+    // Js.log2(bestResult.contents, score.contents)
     let (nextY, nextX) = nextEmptyPositions[bestResult.contents]
     squareRun(nextY, nextX)
   }
@@ -240,3 +255,112 @@ let make = () => {
     </div>
   </div>
 }
+
+// <script>
+// https://github.com/JiongXing/PuzzleGame
+//         // use A* solve 8 puzzle problem?
+//         // A* algorithm:
+//         // 1. start from the begining point
+//         // 2. find the nearest point to the end point
+//         // 3. if the point is the end point, stop
+//         // 4. if the point is not the end point, find the nearest point to the end point
+
+//         const startArr = [[8, 4, 5], [6, 1, 2], [3, 7, 9]]
+//         const endArr = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+
+//         function getArrClone(arr) {
+//             return arr.map(item => [...item])
+//         }
+
+//         function isEnd(arr) {
+//             return startArr.flat() === endArr.flat()
+//         }
+
+//         function computed(arr) {
+//             let i = 0
+//             endArr.forEach((item, y) => {
+//                 item.forEach((a, x) => {
+//                     if (a === 9) {
+//                         return
+//                     }
+//                     const [y1,x1] = getPosition(arr, a)
+//                     i += Math.abs(y - y1) + Math.abs(x - x1)
+//                 })
+//             })
+//             return i
+//         }
+
+//         function replacement(arr, oldPosition, newPosition) {
+//             const arrC = getArrClone(arr)
+//             const temp = arrC[oldPosition.y][oldPosition.x]
+//             arrC[oldPosition.y][oldPosition.x] = arrC[newPosition.y][newPosition.x]
+//             arrC[newPosition.y][newPosition.x] = temp
+//             return arrC
+//         }
+
+//         function getPosition(arr, s) {
+//             const y = arr.findIndex(item => item.find(i => i === s))
+//             const x = arr[y].findIndex(item => item === s)
+//             return [y, x]
+//         }
+
+//         function getNextArr(arr) {
+//             const nextArr = []
+//             const [y, x] = getPosition(arr, 9)
+//             if (arr[y + 1]?.[x]) {
+//                 nextArr.push(replacement(arr, { y, x }, { y: y + 1, x }))
+//             }
+//             if (arr[y - 1]?.[x]) {
+//                 nextArr.push(replacement(arr, { y, x }, { y: y - 1, x }))
+
+//             }
+//             if (arr[y][x + 1]) {
+//                 nextArr.push(replacement(arr, { y, x }, { y, x: x + 1 }))
+//             }
+//             if (arr[y][x - 1]) {
+//                 nextArr.push(replacement(arr, { y, x }, { y, x: x - 1 }))
+//             }
+
+//             return nextArr
+
+//         }
+
+//         function genId(arr) {
+//             return arr.flat().reduce((p, c) => {
+//                 return `${p}${c}`
+//             }, 0)
+//         }
+
+//         function init() {
+//             const openList = []
+//             const closeList = []
+//             openList.push({
+//                 id: genId(startArr),
+//                 currentArr: getArrClone(startArr),
+//                 value: 0
+//             })
+
+//             while (openList.length) {
+//                 const current = openList.shift()
+//                 if (isEnd(current.currentArr)) {
+//                     console.log(current.currentArr)
+//                     return
+//                 }
+//                 closeList.push(current.id)
+//                 const nextArr = getNextArr(current.currentArr)
+//                 nextArr.forEach(item => {
+//                     const id = genId(item)
+//                     if (closeList.includes(id)) return
+//                     const value = computed(item)
+//                     openList.push({
+//                         id,
+//                         currentArr: item,
+//                         value
+//                     })
+//                 })
+//                 openList.sort((a, b) => a.value - b.value)
+//             }
+//         }
+//  init()
+
+//     </script>
