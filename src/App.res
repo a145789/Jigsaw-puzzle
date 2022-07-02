@@ -5,14 +5,15 @@ external alert: string => unit = "alert"
 
 type appMode = Manual | Auto | Over
 
-
 type rec autoNode = {
-  "parentStatus": option<autoNode>,
-  "childStatus": array<autoNode>,
-  "emptyCurrentPosition": (int, int),
-} 
+  currentStatus: array<array<int>>,
+  parent: option<autoNode>,
+  id: string,
+  score: int,
+  position: (int, int),
+}
 
-
+let endArr = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
 @react.component
 let make = () => {
@@ -22,7 +23,9 @@ let make = () => {
   let (mode: appMode, setMode) = React.useState(() => Manual)
 
   let emtyPosition = React.useRef((2, 2))
-  let prevEmptyOptions = React.useRef((2, 2))
+  let path: React.ref<array<(int, int)>> = React.useRef([])
+  let pathIdx = React.useRef(0)
+  let jigsawArrayRef = React.useRef(jigsawArray)
 
   let isUnsolvable = arr => {
     let a = ref(0)
@@ -37,14 +40,33 @@ let make = () => {
   }
 
   let rec genJigsaw = () => {
-    let result = Js.Array2.sortInPlaceWith([1, 2, 3, 4, 5, 6, 7, 8], (_, _) =>
-      Js.Math.random() > 0.5 ? 1 : -1
-    )
+    let result =
+      [1, 2, 3, 4, 5, 6, 7, 8]->Js.Array2.sortInPlaceWith((_, _) => Js.Math.random() > 0.5 ? 1 : -1)
     if isUnsolvable(result) {
       genJigsaw()
     } else {
       result
     }
+  }
+
+  let genId = (arr: array<array<int>>) => {
+    arr->Belt_Array.concatMany->Belt_Array.joinWith("", n => n->Belt.Int.toString)
+  }
+
+  let getDeepCloneJigsawArray = (arr: array<array<int>>) => arr->Belt.Array.map(Belt.Array.copy)
+
+  let virtualConvert = (
+    (nextY, nextX): (int, int),
+    (emptyY, emptyX): (int, int),
+    arr: array<array<int>>,
+  ) => {
+    let jigsawArrayCopy = getDeepCloneJigsawArray(arr)
+
+    let replaceValue = jigsawArrayCopy[nextY][nextX]
+    jigsawArrayCopy[nextY][nextX] = 9
+    jigsawArrayCopy[emptyY][emptyX] = replaceValue
+
+    jigsawArrayCopy
   }
 
   let tearArr = (arr: array<int>) => {
@@ -55,38 +77,35 @@ let make = () => {
     ]
   }
 
-  let getDeepCloneJigsawArray = () => jigsawArray->Belt.Array.map(Belt.Array.copy)
+  let isEnd = (id: string) => {
+    id === "123456789"
+  }
 
   let restGame = () => {
     setStep(_ => 0)
     setTime(_ => 0)
-    setJigsawArray(_ => [])
     emtyPosition.current = (2, 2)
-    prevEmptyOptions.current = (2, 2)
+    jigsawArrayRef.current = []
+    setJigsawArray(_ => jigsawArrayRef.current)
+    path.current = []
+    pathIdx.current = 0
   }
 
   let beginInit = () => {
     restGame()
     setTime(_ => 1)
-    setJigsawArray(_ => genJigsaw()->Belt.Array.concat([9])->tearArr)
+    jigsawArrayRef.current = genJigsaw()->Belt.Array.concat([9])->tearArr
+    setJigsawArray(_ => jigsawArrayRef.current)
   }
 
-  let virtualConvert = (nextY: int, nextX: int) => {
-    let (emptyY, emptyX) = emtyPosition.current
-    let jigsawArrayCopy = getDeepCloneJigsawArray()
-
-    let replaceValue = jigsawArrayCopy[nextY][nextX]
-    jigsawArrayCopy[nextY][nextX] = 9
-    jigsawArrayCopy[emptyY][emptyX] = replaceValue
-
-    jigsawArrayCopy
-  }
-
-  let squareRun = (nextY: int, nextX: int) => {
-    let a = virtualConvert(nextY, nextX)
-    setJigsawArray(_ => a)
+  let squareRun = ((nextY, nextX): (int, int)) => {
+    jigsawArrayRef.current = virtualConvert(
+      (nextY, nextX),
+      emtyPosition.current,
+      jigsawArrayRef.current,
+    )
+    setJigsawArray(_ => jigsawArrayRef.current)
     setStep(_ => step + 1)
-    prevEmptyOptions.current = emtyPosition.current
     emtyPosition.current = (nextY, nextX)
   }
 
@@ -103,115 +122,173 @@ let make = () => {
           (emptyX === x && (y + 1 === emptyY || y - 1 === emptyY)) ||
             (emptyY === y && (x + 1 === emptyX || x - 1 === emptyX))
         ) {
-          squareRun(y, x)
+          squareRun((y, x))
         }
       }
     | Auto | Over => ()
     }
   }
 
-  let computedAutoModeNext = () => {
-    let getTurePosition = (num: int) => {
-      let x = ref(0)
-      let y = switch [(1, 2, 3), (4, 5, 6), (7, 8, 9)]->Belt.Array.getIndexBy(((a, b, c)) => {
-        switch [a, b, c]->Belt.Array.getIndexBy(item => item === num) {
-        | Some(xIdx) => {
-            x := xIdx
-            true
-          }
-        | None => false
-        }
-      }) {
-      | Some(findY) => findY
-      | None => 0
-      }
+  // a* 算法自动寻路
+  let computedScore = (arr: array<array<int>>) => {
+    let score = ref(0)
+    arr->Belt.Array.forEachWithIndex((y, line) => {
+      line->Belt.Array.forEachWithIndex((x, item) => {
+        switch item {
+        | 9 => ()
+        | _ => {
+            let endY = switch endArr->Belt_Array.getIndexBy(line =>
+              line->Belt_Array.some(xItem => xItem == item)
+            ) {
+            | Some(n) => n
+            | None => 0
+            }
+            let endX = switch endArr->Belt_Array.get(endY) {
+            | Some(line) =>
+              switch line->Belt_Array.getIndexBy(xItem => xItem == item) {
+              | Some(x) => x
+              | None => 0
+              }
+            | None => 0
+            }
 
-      (y, x.contents)
-    }
-
-    let (emptyY, emptyX) = emtyPosition.current
-    let node: autoNode = {
-      "parentStatus": None,
-      "childStatus": [],
-      "emptyCurrentPosition": emtyPosition.current,
-    }
-
-    let nextEmptyPositions = Js.Array2.filter(
-      [(emptyY + 1, emptyX), (emptyY - 1, emptyX), (emptyY, emptyX + 1), (emptyY, emptyX - 1)],
-      ((y, x)) => {
-        let (prevEmptyY, prevEmptyX) = prevEmptyOptions.current
-        if prevEmptyY === y && prevEmptyX === x {
-          false
-        } else {
-          switch jigsawArray->Belt.Array.get(y) {
-          | Some(item) => item->Belt.Array.get(x)->Belt.Option.isSome
-          | None => false
+            score := score.contents + Js.Math.abs_int(x - endX) + Js.Math.abs_int(y - endY)
           }
         }
-      },
-    )
-
-    let i = ref(0)
-    let score = ref(100000)
-    let bestResult = ref(i.contents)
-    while i.contents < Belt.Array.size(nextEmptyPositions) {
-      let (nextY, nextX) = nextEmptyPositions[i.contents]
-      let newJigsawArray = virtualConvert(nextY, nextX)
-      let currentScore = newJigsawArray->Belt.Array.reduceWithIndex(0, (_score, line, y) => {
-        line->Belt.Array.reduceWithIndex(_score, (__score, item, x) => {
-          if item !== 9 {
-            let (trueY, trueX) = getTurePosition(item)
-            __score + Js.Math.abs_int(y - trueY) + Js.Math.abs_int(x - trueX)
-          } else {
-            __score
-          }
-        })
       })
-      // Js.log2(currentScore, score.contents)
-      if currentScore < score.contents {
-        bestResult := i.contents
-        score := currentScore
-      }
+    })
+    score.contents
+  }
 
-      i := i.contents + 1
+  let getNextList = (arr: array<array<int>>, (emptyY, emptyX): (int, int)) => {
+    let nextPositions = [
+      (emptyY + 1, emptyX),
+      (emptyY - 1, emptyX),
+      (emptyY, emptyX + 1),
+      (emptyY, emptyX - 1),
+    ]->Js.Array2.filter(((y, x)) => {
+      switch arr->Belt.Array.get(y) {
+      | Some(item) => item->Belt.Array.get(x)->Belt.Option.isSome
+      | None => false
+      }
+    })
+
+    nextPositions->Belt_Array.map(p => (p, virtualConvert(p, (emptyY, emptyX), arr)))
+  }
+
+  let computedAutoModeNext = () => {
+    let openList: array<autoNode> = [
+      {
+        currentStatus: getDeepCloneJigsawArray(jigsawArrayRef.current),
+        parent: None,
+        id: genId(jigsawArrayRef.current),
+        score: 10000,
+        position: emtyPosition.current,
+      },
+    ]
+    let closeList: array<string> = []
+
+    let endNode: ref<option<autoNode>> = ref(None)
+    while Belt.Option.isNone(endNode.contents) && openList->Belt.Array.size > 0 {
+      let openNode = openList->Js.Array2.pop
+      switch openNode {
+      | Some(node) => {
+          closeList->Js_array2.push(node.id)->ignore
+
+          let nextList = getNextList(node.currentStatus, node.position)
+          let i = ref(0)
+          while i.contents < nextList->Belt_Array.size {
+            switch nextList->Belt_Array.get(i.contents) {
+            | Some(next) => {
+                let (nextPosition, nextStatus) = next
+                let id = genId(nextStatus)
+
+                switch closeList->Js_array2.includes(id) {
+                | true => ()
+                | false => {
+                    let score = computedScore(nextStatus)
+                    let nextNode = {
+                      id: id,
+                      parent: Js.Option.some(node),
+                      currentStatus: nextStatus,
+                      score: score,
+                      position: nextPosition,
+                    }
+                    if isEnd(id) {
+                      endNode := Some(nextNode)
+                      i := nextList->Belt_Array.size
+                    } else {
+                      openList->Js.Array2.push(nextNode)->ignore
+                    }
+                  }
+                }
+              }
+            | None => ()
+            }
+            i := i.contents + 1
+          }
+
+          openList->Js.Array2.sortInPlaceWith((a, b) => b.score - a.score)->ignore
+        }
+
+      | None => ()
+      }
     }
-    // Js.log2(bestResult.contents, score.contents)
-    let (nextY, nextX) = nextEmptyPositions[bestResult.contents]
-    squareRun(nextY, nextX)
+
+    path.current =
+      switch endNode.contents {
+      | Some(end) => {
+          let thePath: array<(int, int)> = []
+          let node = ref(end)
+          while Belt.Option.isSome(node.contents.parent) {
+            thePath->Js.Array2.push(node.contents.position)->ignore
+            node := node.contents.parent->Belt.Option.getExn
+          }
+
+          thePath
+        }
+      | None => []
+      }->Belt.Array.reverse
   }
 
   let autoGame = () => {
     setMode(_ => Auto)
     beginInit()
+    computedAutoModeNext()
   }
 
   React.useEffect1(() => {
     switch Belt.Array.length(jigsawArray) {
     | 0 => None
     | _ =>
-      if (
-        !Js.Array2.somei(jigsawArray, (item, i1) =>
-          Js.Array2.somei(item, (e, i2) => e !== 3 * i1 + i2 + 1)
-        )
-      ) {
-        alert("You win!")
+      if jigsawArray->genId->isEnd {
         setMode(_ => Over)
         setTime(_ => 0)
-        None
+        let timer = Js.Global.setTimeout(() => {
+          alert("You win!")
+        }, 300)
+
+        Some(() => Js.Global.clearTimeout(timer))
       } else {
-        switch mode {
-        | Manual | Over => None
-        | Auto => {
-            let timer = Js.Global.setTimeout(() => computedAutoModeNext(), 1000)
-            let clenup = () => {
-              Js.Global.clearTimeout(timer)
-            }
-            Some(clenup)
-          }
-        }
+        None
       }
     }
   }, [jigsawArray])
+  React.useEffect2(() => {
+    switch mode {
+    | Manual | Over => None
+    | Auto => {
+        let timer = Js.Global.setTimeout(() => {
+          squareRun(path.current[pathIdx.current])
+          pathIdx.current = pathIdx.current + 1
+        }, 1000)
+        let clenup = () => {
+          Js.Global.clearTimeout(timer)
+        }
+        Some(clenup)
+      }
+    }
+  }, (mode, pathIdx.current))
   React.useEffect1(() => {
     switch time {
     | 0 => None
@@ -251,116 +328,7 @@ let make = () => {
         <button onClick={_e => restGame()}> {"Rest Game"->React.string} </button>
         <button onClick={_e => autoGame()}> {"Auto Game"->React.string} </button>
       </div>
-      <div className="version"> {"v1.0.0"->React.string} </div>
+      <div className="version"> {"v2.0.0"->React.string} </div>
     </div>
   </div>
 }
-
-// <script>
-// https://github.com/JiongXing/PuzzleGame
-//         // use A* solve 8 puzzle problem?
-//         // A* algorithm:
-//         // 1. start from the begining point
-//         // 2. find the nearest point to the end point
-//         // 3. if the point is the end point, stop
-//         // 4. if the point is not the end point, find the nearest point to the end point
-
-//         const startArr = [[8, 4, 5], [6, 1, 2], [3, 7, 9]]
-//         const endArr = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-
-//         function getArrClone(arr) {
-//             return arr.map(item => [...item])
-//         }
-
-//         function isEnd(arr) {
-//             return startArr.flat() === endArr.flat()
-//         }
-
-//         function computed(arr) {
-//             let i = 0
-//             endArr.forEach((item, y) => {
-//                 item.forEach((a, x) => {
-//                     if (a === 9) {
-//                         return
-//                     }
-//                     const [y1,x1] = getPosition(arr, a)
-//                     i += Math.abs(y - y1) + Math.abs(x - x1)
-//                 })
-//             })
-//             return i
-//         }
-
-//         function replacement(arr, oldPosition, newPosition) {
-//             const arrC = getArrClone(arr)
-//             const temp = arrC[oldPosition.y][oldPosition.x]
-//             arrC[oldPosition.y][oldPosition.x] = arrC[newPosition.y][newPosition.x]
-//             arrC[newPosition.y][newPosition.x] = temp
-//             return arrC
-//         }
-
-//         function getPosition(arr, s) {
-//             const y = arr.findIndex(item => item.find(i => i === s))
-//             const x = arr[y].findIndex(item => item === s)
-//             return [y, x]
-//         }
-
-//         function getNextArr(arr) {
-//             const nextArr = []
-//             const [y, x] = getPosition(arr, 9)
-//             if (arr[y + 1]?.[x]) {
-//                 nextArr.push(replacement(arr, { y, x }, { y: y + 1, x }))
-//             }
-//             if (arr[y - 1]?.[x]) {
-//                 nextArr.push(replacement(arr, { y, x }, { y: y - 1, x }))
-
-//             }
-//             if (arr[y][x + 1]) {
-//                 nextArr.push(replacement(arr, { y, x }, { y, x: x + 1 }))
-//             }
-//             if (arr[y][x - 1]) {
-//                 nextArr.push(replacement(arr, { y, x }, { y, x: x - 1 }))
-//             }
-
-//             return nextArr
-
-//         }
-
-//         function genId(arr) {
-//             return arr.flat().reduce((p, c) => {
-//                 return `${p}${c}`
-//             }, 0)
-//         }
-
-//         function init() {
-//             const openList = []
-//             const closeList = []
-//             openList.push({
-//                 id: genId(startArr),
-//                 currentArr: getArrClone(startArr),
-//                 value: 0
-//             })
-
-//             while (openList.length) {
-//                 const current = openList.shift()
-//                 if (isEnd(current.currentArr)) {
-//                     console.log(current.currentArr)
-//                     return
-//                 }
-//                 closeList.push(current.id)
-//                 const nextArr = getNextArr(current.currentArr)
-//                 nextArr.forEach(item => {
-//                     const id = genId(item)
-//                     if (closeList.includes(id)) return
-//                     const value = computed(item)
-//                     openList.push({
-//                         id,
-//                         currentArr: item,
-//                         value
-//                     })
-//                 })
-//                 openList.sort((a, b) => a.value - b.value)
-//             }
-//         }
-//  init()
-
-//     </script>
