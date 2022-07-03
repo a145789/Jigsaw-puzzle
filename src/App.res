@@ -281,7 +281,7 @@ let make = () => {
         let timer = Js.Global.setTimeout(() => {
           squareRun(path.current[pathIdx.current])
           pathIdx.current = pathIdx.current + 1
-        }, 1000)
+        }, 500)
         let clenup = () => {
           Js.Global.clearTimeout(timer)
         }
@@ -328,7 +328,7 @@ let make = () => {
         <button onClick={_e => restGame()}> {"Rest Game"->React.string} </button>
         <button onClick={_e => autoGame()}> {"Auto Game"->React.string} </button>
       </div>
-      <div className="version"> {"v2.0.0"->React.string} </div>
+      <div className="version"> {"v2.1.0"->React.string} </div>
     </div>
   </div>
 }
