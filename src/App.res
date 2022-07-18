@@ -1,5 +1,8 @@
 %%raw(`import './App.css'`)
 
+@module("react")
+external useTransition: unit => (bool, (. unit => unit) => unit) = "useTransition"
+
 @val @scope("window")
 external alert: string => unit = "alert"
 
@@ -10,7 +13,13 @@ type rec autoNode = {
   parent: option<autoNode>,
   id: string,
   score: int,
+  step: int,
   position: (int, int),
+}
+
+type originSet<'a> = {
+  add: (. 'a) => unit,
+  has: (. 'a) => bool,
 }
 
 let endArr = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -20,6 +29,8 @@ let make = () => {
   let (step, setStep) = React.useState(() => 0)
   let (time, setTime) = React.useState(() => 0)
   let (jigsawArray: array<array<int>>, setJigsawArray) = React.useState(() => [])
+  let (_isPending, startTransition) = useTransition()
+  let (isPending, setIsPending) = React.useState(() => false)
   let (mode: appMode, setMode) = React.useState(() => Manual)
 
   let emtyPosition = React.useRef((2, 2))
@@ -93,7 +104,6 @@ let make = () => {
 
   let beginInit = () => {
     restGame()
-    setTime(_ => 1)
     jigsawArrayRef.current = genJigsaw()->Belt.Array.concat([9])->tearArr
     setJigsawArray(_ => jigsawArrayRef.current)
   }
@@ -112,6 +122,7 @@ let make = () => {
   let manualGame = () => {
     setMode(_ => Manual)
     beginInit()
+    setTime(_ => 1)
   }
 
   let manualHandle = (y: int, x: int) => {
@@ -125,6 +136,7 @@ let make = () => {
           squareRun((y, x))
         }
       }
+
     | Auto | Over => ()
     }
   }
@@ -137,8 +149,8 @@ let make = () => {
         switch item {
         | 9 => ()
         | _ => {
-            let endY = switch endArr->Belt_Array.getIndexBy(line =>
-              line->Belt_Array.some(xItem => xItem == item)
+            let endY = switch endArr->Belt_Array.getIndexBy(
+              line => line->Belt_Array.some(xItem => xItem == item),
             ) {
             | Some(n) => n
             | None => 0
@@ -182,18 +194,19 @@ let make = () => {
         currentStatus: getDeepCloneJigsawArray(jigsawArrayRef.current),
         parent: None,
         id: genId(jigsawArrayRef.current),
-        score: 10000,
+        score: 100,
+        step: 1,
         position: emtyPosition.current,
       },
     ]
-    let closeList: array<string> = []
+    let closeList: originSet<string> = %raw(`new Set()`)
 
     let endNode: ref<option<autoNode>> = ref(None)
     while Belt.Option.isNone(endNode.contents) && openList->Belt.Array.size > 0 {
       let openNode = openList->Js.Array2.pop
       switch openNode {
       | Some(node) => {
-          closeList->Js_array2.push(node.id)->ignore
+          closeList.add(. node.id)->ignore
 
           let nextList = getNextList(node.currentStatus, node.position)
           let i = ref(0)
@@ -203,15 +216,18 @@ let make = () => {
                 let (nextPosition, nextStatus) = next
                 let id = genId(nextStatus)
 
-                switch closeList->Js_array2.includes(id) {
+                switch closeList.has(. id) {
                 | true => ()
                 | false => {
                     let score = computedScore(nextStatus)
+                    let parent = Js.Option.some(node)
+                    let step = node.step + 1
                     let nextNode = {
-                      id: id,
-                      parent: Js.Option.some(node),
+                      id,
+                      parent,
                       currentStatus: nextStatus,
-                      score: score,
+                      score: lsl(score, 20) + lsl(step, 6) + node.score + score,
+                      step,
                       position: nextPosition,
                     }
                     if isEnd(id) {
@@ -223,9 +239,10 @@ let make = () => {
                   }
                 }
               }
+
             | None => ()
             }
-            i := i.contents + 1
+            i := -lnot(i.contents)
           }
 
           openList->Js.Array2.sortInPlaceWith((a, b) => b.score - a.score)->ignore
@@ -235,26 +252,31 @@ let make = () => {
       }
     }
 
-    path.current =
-      switch endNode.contents {
-      | Some(end) => {
-          let thePath: array<(int, int)> = []
-          let node = ref(end)
-          while Belt.Option.isSome(node.contents.parent) {
-            thePath->Js.Array2.push(node.contents.position)->ignore
-            node := node.contents.parent->Belt.Option.getExn
-          }
-
-          thePath
+    path.current = switch endNode.contents {
+    | Some(end) => {
+        let thePath: array<(int, int)> = []
+        let node = ref(end)
+        while Belt.Option.isSome(node.contents.parent) {
+          thePath->Js.Array2.push(node.contents.position)->ignore
+          node := node.contents.parent->Belt.Option.getExn
         }
-      | None => []
-      }->Belt.Array.reverse
+
+        thePath->Belt.Array.reverse
+      }
+
+    | None => []
+    }
   }
 
   let autoGame = () => {
-    setMode(_ => Auto)
     beginInit()
-    computedAutoModeNext()
+    setIsPending(_ => true)
+    startTransition(.() => {
+      computedAutoModeNext()
+      setTime(_ => 1)
+      setMode(_ => Auto)
+      setIsPending(_ => false)
+    })
   }
 
   React.useEffect1(() => {
@@ -320,8 +342,10 @@ let make = () => {
         })->React.array}
       </div>
       <div className="msg">
+        <div> {`${isPending ? "wait" : ""}`->React.string} </div>
         <div> {`step: ${step->Belt.Int.toString}`->React.string} </div>
         <div> {`time: ${time->Belt.Int.toString} `->React.string} </div>
+        <div> {`length: ${path.current->Belt.Array.size->Belt.Int.toString}`->React.string} </div>
       </div>
       <div className="btn">
         <button onClick={_e => manualGame()}> {"Play Game"->React.string} </button>
