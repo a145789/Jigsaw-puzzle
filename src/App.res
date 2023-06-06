@@ -1,7 +1,5 @@
+@@jsxConfig({version: 4, mode: "automatic"})
 %%raw(`import './App.css'`)
-
-@module("react")
-external useTransition: unit => (bool, (. unit => unit) => unit) = "useTransition"
 
 @val @scope("window")
 external alert: string => unit = "alert"
@@ -29,7 +27,7 @@ let make = () => {
   let (step, setStep) = React.useState(() => 0)
   let (time, setTime) = React.useState(() => 0)
   let (jigsawArray: array<array<int>>, setJigsawArray) = React.useState(() => [])
-  let (_isPending, startTransition) = useTransition()
+  let (_isPending, startTransition) = React.useTransition()
   let (isPending, setIsPending) = React.useState(() => false)
   let (mode: appMode, setMode) = React.useState(() => Manual)
 
@@ -352,7 +350,7 @@ let make = () => {
         <button onClick={_e => restGame()}> {"Rest Game"->React.string} </button>
         <button onClick={_e => autoGame()}> {"Auto Game"->React.string} </button>
       </div>
-      <div className="version"> {"v2.2.0"->React.string} </div>
+      <div className="version"> {"v2.3.0"->React.string} </div>
     </div>
   </div>
 }

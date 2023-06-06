@@ -1,23 +1,18 @@
 {
-    "name": "vite-react-rescript-starter",
-    "sources": [
-      {
-        "dir": "src",
-        "subdirs": true
-      }
-    ],
-    "package-specs": [
-      {
-        "module": "es6",
-        "in-source": true
-      }
-    ],
-    "suffix": ".bs.js",
-    "reason": {
-      "react-jsx": 3
-    },
-    "bs-dependencies": [
-      "@rescript/react",
-      "rescript-webapi"
-    ]
-  }
+  "name": "vite-react-rescript-starter",
+  "sources": [
+    {
+      "dir": "src",
+      "subdirs": true
+    }
+  ],
+  "package-specs": [
+    {
+      "module": "es6",
+      "in-source": true
+    }
+  ],
+  "suffix": ".bs.js",
+  "jsx": { "version": 4, "mode": "automatic" },
+  "bs-dependencies": ["@rescript/react", "rescript-webapi"]
+}
