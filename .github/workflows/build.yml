@@ -39,7 +39,5 @@ jobs:
           folder: dist
           single-commit: true
           clean: true
-          clean-exclude: |
-            v2/*
-            v2/**/*
+          target-folder: v1
           
